@@ -396,6 +396,15 @@
           <button class="tab-btn" onclick="switchTab('valorisation', this)">
             📊 Valorisation Portefeuille
           </button>
+          <button class="tab-btn" onclick="switchTab('affectations', this)">
+            📝 Affectations
+          </button>
+          <button class="tab-btn" onclick="switchTab('situation', this)">
+            👤 Situation Client
+          </button>
+          <button class="tab-btn" onclick="switchTab('releve', this)">
+            📂 Relevé Titres
+          </button>
           <button class="tab-btn" onclick="switchTab('recon', this)">
             🔍 Réconciliation
           </button>
@@ -434,6 +443,48 @@
           <div class="empty-state">
             <div class="icon">📊</div>
             <p>Aucun relevé Valorisation importé</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Affectations Tab -->
+      <div class="tab-content" id="tab-affectations">
+        <div class="filter-bar">
+          <label>🔎</label>
+          <input type="text" id="filterAff" placeholder="Filtrer par titre, compte…" style="width:240px;" oninput="renderAll(parsedData)">
+        </div>
+        <div id="affContent">
+          <div class="empty-state">
+            <div class="icon">📝</div>
+            <p>Aucun fichier Affectations Préliminaires importé</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Situation Client Tab -->
+      <div class="tab-content" id="tab-situation">
+        <div class="filter-bar">
+          <label>🔎</label>
+          <input type="text" id="filterSit" placeholder="Filtrer par titre, ISIN…" style="width:240px;" oninput="renderAll(parsedData)">
+        </div>
+        <div id="sitContent">
+          <div class="empty-state">
+            <div class="icon">👤</div>
+            <p>Aucun fichier Situation Client importé</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Relevé Titres Tab -->
+      <div class="tab-content" id="tab-releve">
+        <div class="filter-bar">
+          <label>🔎</label>
+          <input type="text" id="filterRel" placeholder="Filtrer par titre…" style="width:240px;" oninput="renderAll(parsedData)">
+        </div>
+        <div id="relContent">
+          <div class="empty-state">
+            <div class="icon">📂</div>
+            <p>Aucun fichier Relevé Titres FCP importé</p>
           </div>
         </div>
       </div>
@@ -556,8 +607,9 @@ document.getElementById('parseBtn').addEventListener('click', async () => {
     buildDateChips(data);
     renderAll(data);
     document.getElementById('exportBtn').disabled = false;
-    const total = data.soldes.length + data.valorisation.length;
-    document.getElementById('statusMsg').textContent = `✅ ${total} compte(s) traité(s)`;
+    const total = data.soldes.length + data.valorisation.length +
+      (data.affectations||[]).length + (data.situation_client||[]).length + (data.releve_titres||[]).length;
+    document.getElementById('statusMsg').textContent = `✅ ${total} document(s) traité(s)`;
   } catch (e) {
     showError('Erreur lors du traitement : ' + e.message);
   } finally {
@@ -590,7 +642,9 @@ document.getElementById('exportBtn').addEventListener('click', async () => {
 // ── Date chips ───────────────────────────────────────────────────────────
 function buildDateChips(data) {
   const dates = new Set();
-  [...data.soldes, ...data.valorisation].forEach(a => { if (a.date) dates.add(a.date); });
+  [...data.soldes, ...data.valorisation,
+   ...(data.affectations||[]), ...(data.situation_client||[]), ...(data.releve_titres||[])
+  ].forEach(a => { if (a.date) dates.add(a.date); });
 
   const bar = document.getElementById('dateBar');
   const chips = document.getElementById('dateChips');
@@ -650,6 +704,9 @@ function renderAll(data) {
 
   renderSoldes(soldes);
   renderValo(valos);
+  renderAffectations((data.affectations||[]).filter(a => !activeDate || a.date === activeDate));
+  renderSituation((data.situation_client||[]).filter(a => !activeDate || a.date === activeDate));
+  renderReleve((data.releve_titres||[]).filter(a => !activeDate || a.date === activeDate));
   renderRecon({ soldes, valorisation: valos });
 
   populateSelect('filterSoldesAccount', soldes.map(a => ({ v: a.adherent, l: `${a.adherent} – ${a.name}` })));
@@ -797,6 +854,181 @@ function renderValo(accounts) {
             <td colspan="2">TOTAL</td>
             <td class="num">${fmt(lines.reduce((s, l) => s + (l.balance || 0), 0))}</td>
             <td class="num">${fmt(acc.total_valorisation)}</td>
+            <td></td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Affectations ──────────────────────────────────────────────────────────
+function renderAffectations(batches) {
+  const container = document.getElementById('affContent');
+  const q = document.getElementById('filterAff').value.toLowerCase();
+
+  if (!batches.length) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">📝</div><p>Aucun fichier Affectations Préliminaires</p></div>';
+    return;
+  }
+
+  container.innerHTML = batches.map(batch => {
+    const lines = batch.lines.filter(l =>
+      !q || l.titre.toLowerCase().includes(q) || (l.compte||'').includes(q)
+    );
+    return `
+    <div class="account-block">
+      <div class="account-header" onclick="toggleAccount(this)">
+        <div class="acc-info">
+          <span class="acc-id">${batch.adherent || '—'}</span>
+          ${batch.date ? `<span class="acc-date">${fmtDate(batch.date)}</span>` : ''}
+          ${batch.date_reglement ? `<span style="font-size:11px;color:#718096;">Règl. ${fmtDate(batch.date_reglement)}</span>` : ''}
+          <span class="acc-count">${lines.length} affectation(s)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          ${srcBadge(batch.source_file)}
+          <span class="toggle">▼</span>
+        </div>
+      </div>
+      <div class="account-body">
+        <table class="data-table">
+          <thead><tr>
+            <th>Titre</th><th>Compte</th>
+            <th class="num">Quantité</th>
+            <th class="num">Cours</th>
+            <th class="num">Valeur</th>
+            <th>Négociateur</th>
+            <th>Fichier source</th>
+          </tr></thead>
+          <tbody>
+            ${lines.map(l => `<tr>
+              <td>${l.titre}</td>
+              <td>${l.compte}</td>
+              <td class="num">${fmt(l.quantite)}</td>
+              <td class="num">${fmt(l.cours)}</td>
+              <td class="num">${fmt(l.valeur)}</td>
+              <td>${l.negociateur || ''}</td>
+              <td class="src">${l.source_file || ''}</td>
+            </tr>`).join('')}
+          </tbody>
+          <tfoot><tr>
+            <td colspan="4">TOTAL</td>
+            <td class="num">${fmt(lines.reduce((s,l)=>s+(l.valeur||0),0))}</td>
+            <td colspan="2"></td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Situation Client ──────────────────────────────────────────────────────
+function renderSituation(portfolios) {
+  const container = document.getElementById('sitContent');
+  const q = document.getElementById('filterSit').value.toLowerCase();
+
+  if (!portfolios.length) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">👤</div><p>Aucun fichier Situation Client</p></div>';
+    return;
+  }
+
+  container.innerHTML = portfolios.map(p => {
+    const lines = p.lines.filter(l =>
+      !q || l.titre.toLowerCase().includes(q) || (l.isin||'').toLowerCase().includes(q)
+    );
+    return `
+    <div class="account-block">
+      <div class="account-header" onclick="toggleAccount(this)">
+        <div class="acc-info">
+          <span class="acc-id">${p.matricule || '—'}</span>
+          ${p.date ? `<span class="acc-date">${fmtDate(p.date)}</span>` : ''}
+          <span class="acc-name">${p.client_name || ''}</span>
+          <span class="acc-count">${lines.length} titre(s)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          ${srcBadge(p.source_file)}
+          <span class="toggle">▼</span>
+        </div>
+      </div>
+      <div class="account-body">
+        <table class="data-table">
+          <thead><tr>
+            <th>Titre</th><th>ISIN</th>
+            <th class="num">Quantité</th>
+            <th class="num">Cours Actuel</th>
+            <th class="num">Valorisation XOF</th>
+            <th>Fichier source</th>
+          </tr></thead>
+          <tbody>
+            ${lines.map(l => `<tr>
+              <td>${l.titre}</td>
+              <td class="isin">${l.isin||''}</td>
+              <td class="num">${fmt(l.quantite)}</td>
+              <td class="num">${fmt(l.cours_actuel)}</td>
+              <td class="num">${fmt(l.valorisation_xof)}</td>
+              <td class="src">${l.source_file||''}</td>
+            </tr>`).join('')}
+          </tbody>
+          <tfoot><tr>
+            <td colspan="4">TOTAL</td>
+            <td class="num">${fmt(lines.reduce((s,l)=>s+(l.valorisation_xof||0),0))}</td>
+            <td></td>
+          </tr></tfoot>
+        </table>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── Relevé Titres FCP ─────────────────────────────────────────────────────
+function renderReleve(portfolios) {
+  const container = document.getElementById('relContent');
+  const q = document.getElementById('filterRel').value.toLowerCase();
+
+  if (!portfolios.length) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">📂</div><p>Aucun fichier Relevé Titres FCP</p></div>';
+    return;
+  }
+
+  container.innerHTML = portfolios.map(p => {
+    const lines = p.lines.filter(l => !q || l.titre.toLowerCase().includes(q));
+    const totalVal = lines.reduce((s,l)=>s+(l.valeur_fcfa||0),0);
+    return `
+    <div class="account-block">
+      <div class="account-header" onclick="toggleAccount(this)">
+        <div class="acc-info">
+          <span class="acc-id">${p.compte || p.client || '—'}</span>
+          ${p.date ? `<span class="acc-date">${fmtDate(p.date)}</span>` : ''}
+          <span class="acc-count">${lines.length} ligne(s)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:13px;font-weight:600;color:#276749;">${fmt(totalVal)} FCFA</span>
+          ${srcBadge(p.source_file)}
+          <span class="toggle">▼</span>
+        </div>
+      </div>
+      <div class="account-body">
+        <table class="data-table">
+          <thead><tr>
+            <th>Titre</th><th>Catégorie</th>
+            <th class="num">Quantité</th>
+            <th class="num">Coût Moyen</th>
+            <th class="num">Valeur FCFA</th>
+            <th>Fichier source</th>
+          </tr></thead>
+          <tbody>
+            ${lines.map(l => `<tr>
+              <td>${l.titre}</td>
+              <td>${l.section||''}</td>
+              <td class="num">${fmt(l.quantite)}</td>
+              <td class="num">${fmt(l.cout_moyen)}</td>
+              <td class="num">${fmt(l.valeur_fcfa)}</td>
+              <td class="src">${l.source_file||''}</td>
+            </tr>`).join('')}
+          </tbody>
+          <tfoot><tr>
+            <td colspan="4">TOTAL</td>
+            <td class="num">${fmt(totalVal)}</td>
             <td></td>
           </tr></tfoot>
         </table>
