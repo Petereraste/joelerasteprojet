@@ -16,7 +16,7 @@ app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
 def parse_num(s):
     if s is None:
         return None
-    s = str(s).strip().replace('\xa0', '').replace(' ', '')
+    s = str(s).strip().replace('\xa0', '').replace(' ', '').replace('(cid:3031)', '')
     try:
         return int(s)
     except (ValueError, TypeError):
@@ -48,13 +48,51 @@ def extract_date_from_text(text):
     return None
 
 
+MONTH_FR = {
+    'jan': 1, 'fév': 2, 'fev': 2, 'mar': 3, 'avr': 4, 'mai': 5,
+    'jun': 6, 'juin': 6, 'jul': 7, 'juil': 7, 'aoû': 8, 'aou': 8,
+    'sep': 9, 'oct': 10, 'nov': 11, 'déc': 12, 'dec': 12
+}
+
+
+def parse_date_fr(s):
+    """Parse date like '03-juin.-2026' or '03-juin-2026' to YYYY-MM-DD."""
+    if not s:
+        return None
+    m = re.match(r'(\d{2})-([a-zA-ZéèêàûôîäëïüùæœÉÈÊÀÛÔÎÄËÏÜÙÆŒ]+)\.?-(\d{4})', s.strip())
+    if m:
+        day = int(m.group(1))
+        month_str = m.group(2).lower()[:4].rstrip('.')
+        # Try various prefix lengths
+        month_num = None
+        for length in [4, 3, 2]:
+            key = month_str[:length]
+            if key in MONTH_FR:
+                month_num = MONTH_FR[key]
+                break
+        if month_num:
+            return f"{m.group(3)}-{month_num:02d}-{day:02d}"
+    # fallback DD-MM-YYYY
+    m2 = re.match(r'(\d{2})-(\d{2})-(\d{4})', s.strip())
+    if m2:
+        return f"{m2.group(3)}-{m2.group(2)}-{m2.group(1)}"
+    return None
+
+
 def detect_document_type(pdf_path):
     with pdfplumber.open(pdf_path) as pdf:
         text = pdf.pages[0].extract_text() or ''
-    if 'SOLDES AUX COMPTES' in text.upper():
+    text_upper = text.upper()
+    if 'SOLDES AUX COMPTES' in text_upper:
         return 'soldes'
-    elif 'VALORISATION PORTEFEUILLE' in text.upper():
+    elif 'VALORISATION PORTEFEUILLE' in text_upper:
         return 'valorisation'
+    elif 'RAPPORT QUOTIDIEN DES AFFECTATIONS' in text_upper or ('AFFECTATIONS' in text_upper and 'PRELIMINAIRE' in text_upper):
+        return 'affectations'
+    elif 'SITUATION CLIENT' in text_upper and 'MATRICULE CLIENT' in text_upper:
+        return 'situation_client'
+    elif 'RELEVE TITRES' in text_upper or 'RELEVÉ TITRES' in text_upper or ('HONNEUR DE VOUS ADRESSER' in text_upper and 'TITRES' in text_upper):
+        return 'releve_titres'
     return 'unknown'
 
 
@@ -235,6 +273,349 @@ def parse_valorisation_portefeuille(pdf_path, source_file):
     return list(accounts.values())
 
 
+# ── Affectations Préliminaires column bands ────────────────────────────
+AFF_TITRE_MIN = 37
+AFF_TITRE_MAX = 136
+AFF_IDAFFECT_MIN = 136
+AFF_IDAFFECT_MAX = 183
+AFF_TRANS_MIN = 183
+AFF_TRANS_MAX = 223
+AFF_NEG_MIN = 223
+AFF_NEG_MAX = 329
+AFF_ORDRE_MIN = 329
+AFF_ORDRE_MAX = 369
+AFF_COMPTE_MIN = 358
+AFF_COMPTE_MAX = 412
+AFF_QTE_MIN = 412
+AFF_QTE_MAX = 463
+AFF_COURS_MIN = 463
+AFF_COURS_MAX = 518
+AFF_VALEUR_MIN = 518
+
+
+def parse_affectations_preliminaires(pdf_path, source_file):
+    results = []
+
+    with pdfplumber.open(pdf_path) as pdf:
+        adherent = None
+        date_seance = None
+        date_reglement = None
+        lines = []
+
+        for page in pdf.pages:
+            text = page.extract_text() or ''
+
+            # Extract header fields
+            m = re.search(r'Adh[eé]rent\s*:\s*(.+)', text)
+            if m:
+                adherent = m.group(1).strip()
+
+            m = re.search(r'S[eé]ance de Bourse\s*:\s*(\d{2}-\S+-\d{4})', text)
+            if m:
+                date_seance = parse_date_fr(m.group(1))
+
+            m = re.search(r'Date R[eè]glement\s*:\s*(\d{2}-\S+-\d{4})', text)
+            if m:
+                date_reglement = parse_date_fr(m.group(1))
+
+            words = page.extract_words()
+            rows = words_to_rows(words, y_tolerance=3)
+
+            for y, row_words in rows:
+                # Data row: has a 6-digit number in the Compte band
+                compte_text = words_in_band(row_words, AFF_COMPTE_MIN, AFF_COMPTE_MAX)
+                if not re.match(r'^\d{6}$', compte_text.strip()):
+                    continue
+
+                titre_words = [w['text'] for w in row_words
+                               if AFF_TITRE_MIN <= w['x0'] < AFF_TITRE_MAX]
+                titre = ' '.join(titre_words).strip()
+
+                neg_words = [w['text'] for w in row_words
+                             if AFF_NEG_MIN <= w['x0'] < AFF_NEG_MAX]
+                negociateur = ' '.join(neg_words).strip()
+
+                qte_raw = words_in_band(row_words, AFF_QTE_MIN, AFF_QTE_MAX)
+                cours_raw = words_in_band(row_words, AFF_COURS_MIN, AFF_COURS_MAX)
+                valeur_raw = words_in_band(row_words, AFF_VALEUR_MIN, 9999)
+
+                # Handle negative numbers: "-60" may span as separate tokens
+                def parse_signed(s):
+                    s = s.strip().replace('\xa0', '').replace(' ', '').replace('(cid:3031)', '')
+                    try:
+                        return int(s)
+                    except (ValueError, TypeError):
+                        return None
+
+                lines.append({
+                    'titre': titre,
+                    'compte': compte_text.strip(),
+                    'quantite': parse_signed(qte_raw),
+                    'cours': parse_signed(cours_raw),
+                    'valeur': parse_signed(valeur_raw),
+                    'negociateur': negociateur,
+                })
+
+    if lines:
+        results.append({
+            'adherent': adherent or '',
+            'date': date_seance or '',
+            'date_reglement': date_reglement or '',
+            'source_file': source_file,
+            'lines': lines,
+        })
+
+    return results
+
+
+# ── Situation Client column bands ──────────────────────────────────────
+SC_DEVISE_MIN = 10
+SC_DEVISE_MAX = 30
+SC_QTE_MIN = 100
+SC_QTE_MAX = 138
+SC_TITRE_MIN = 138
+SC_TITRE_MAX = 298
+SC_ISIN_MIN = 138
+SC_ISIN_MAX = 200
+SC_COURS_MOY_MIN = 298
+SC_COURS_MOY_MAX = 376
+SC_COURS_ACT_MIN = 376
+SC_COURS_ACT_MAX = 462
+SC_PMV_MIN = 462
+SC_PMV_MAX = 527
+SC_PMV_LAT_MIN = 527
+SC_PMV_LAT_MAX = 615
+SC_VALO_MIN = 615
+SC_VALO_MAX = 713
+SC_CV_XOF_MIN = 713
+SC_CV_XOF_MAX = 788
+
+
+def parse_quantite_sc(s):
+    """Parse quantity strings like '192', '4,648', '42,646.00' to int."""
+    if not s:
+        return None
+    s = s.strip().replace(',', '').replace(' ', '')
+    try:
+        return int(float(s))
+    except (ValueError, TypeError):
+        return None
+
+
+def parse_cours_sc(s):
+    """Parse cours like '10,000.00' to float."""
+    if not s:
+        return None
+    s = s.strip().replace(',', '').replace(' ', '')
+    try:
+        return float(s)
+    except (ValueError, TypeError):
+        return None
+
+
+def parse_situation_client(pdf_path, source_file):
+    results = []
+
+    with pdfplumber.open(pdf_path) as pdf:
+        client_name = None
+        matricule = None
+        doc_date = None
+        lines = []
+
+        for page_num, page in enumerate(pdf.pages):
+            text = page.extract_text() or ''
+
+            # Extract header fields from early pages
+            if page_num < 3:
+                m = re.search(r'Nom client\s*:\s*(.+)', text)
+                if m:
+                    client_name = m.group(1).strip()
+
+                m = re.search(r'Matricule Client\s*:\s*(\d+)', text)
+                if m:
+                    matricule = m.group(1).strip()
+
+                m = re.search(r'Date\s*:\s*(\d{2}-\d{2}-\d{4})', text)
+                if m:
+                    d = m.group(1)
+                    doc_date = f"{d[6:]}-{d[3:5]}-{d[:2]}"
+
+            # Data rows from page 3+
+            if page_num < 2:
+                continue
+
+            words = page.extract_words()
+            rows = words_to_rows(words, y_tolerance=3)
+
+            for idx, (y, row_words) in enumerate(rows):
+                # Data row: has "XOF" in devise band AND quantity in qte band
+                devise_words = [w['text'] for w in row_words
+                                if SC_DEVISE_MIN <= w['x0'] < SC_DEVISE_MAX]
+                if not any(d == 'XOF' for d in devise_words):
+                    continue
+
+                qte_text = words_in_band(row_words, SC_QTE_MIN, SC_QTE_MAX)
+                if not qte_text.strip():
+                    continue
+
+                titre_words = [w['text'] for w in row_words
+                               if SC_TITRE_MIN <= w['x0'] < SC_TITRE_MAX]
+                titre = ' '.join(titre_words).strip()
+
+                cours_act_text = words_in_band(row_words, SC_COURS_ACT_MIN, SC_COURS_ACT_MAX)
+                valo_text = words_in_band(row_words, SC_VALO_MIN, SC_VALO_MAX)
+                cv_xof_text = words_in_band(row_words, SC_CV_XOF_MIN, SC_CV_XOF_MAX)
+
+                # Look at next row for ISIN
+                isin = None
+                if idx + 1 < len(rows):
+                    _, next_row_words = rows[idx + 1]
+                    for w in next_row_words:
+                        if SC_ISIN_MIN <= w['x0'] < SC_ISIN_MAX:
+                            candidate = w['text'].strip()
+                            if ISIN_RE.match(candidate) or re.match(r'^[A-Z]{2,4}[0-9A-Z]*$', candidate):
+                                isin = candidate
+                                break
+
+                lines.append({
+                    'titre': titre,
+                    'isin': isin,
+                    'quantite': parse_quantite_sc(qte_text),
+                    'cours_actuel': parse_cours_sc(cours_act_text),
+                    'valorisation_xof': parse_num(cv_xof_text) if cv_xof_text.strip() else parse_num(valo_text),
+                    'source_file': source_file,
+                })
+
+    if lines:
+        results.append({
+            'client_name': client_name or '',
+            'matricule': matricule or '',
+            'date': doc_date or '',
+            'source_file': source_file,
+            'lines': lines,
+        })
+
+    return results
+
+
+# ── Relevé Titres FCP column bands ─────────────────────────────────────
+RT_TITRE_MIN = 30
+RT_TITRE_MAX = 240
+RT_QTE_MIN = 248
+RT_QTE_MAX = 295
+RT_COUT_MIN = 295
+RT_COUT_MAX = 345
+RT_VALEUR_MIN = 475
+RT_VALEUR_MAX = 545
+
+
+def parse_releve_titres(pdf_path, source_file):
+    results = []
+
+    with pdfplumber.open(pdf_path) as pdf:
+        client = None
+        compte = None
+        doc_date = None
+        lines = []
+        current_section = None
+
+        full_text_page0 = pdf.pages[0].extract_text() or ''
+
+        # Extract header from first page text
+        m = re.search(r'Client\s+N[°o]\s*:\s*(\d+)', full_text_page0)
+        if m:
+            client = m.group(1).strip()
+
+        m = re.search(r'Compte\s+N[°o][:\s]+(\S+)', full_text_page0)
+        if m:
+            compte = m.group(1).strip()
+
+        m = re.search(r'[eé]valu[eé]\s+au\s+(\d{2}/\d{2}/\d{4})', full_text_page0, re.IGNORECASE)
+        if m:
+            d = m.group(1)
+            doc_date = f"{d[6:]}-{d[3:5]}-{d[:2]}"
+
+        for page in pdf.pages:
+            text = page.extract_text() or ''
+
+            # Also try to find header on any page
+            if not client:
+                m = re.search(r'Client\s+N[°o]\s*:\s*(\d+)', text)
+                if m:
+                    client = m.group(1).strip()
+            if not compte:
+                m = re.search(r'Compte\s+N[°o][:\s]+(\S+)', text)
+                if m:
+                    compte = m.group(1).strip()
+            if not doc_date:
+                m = re.search(r'[eé]valu[eé]\s+au\s+(\d{2}/\d{2}/\d{4})', text, re.IGNORECASE)
+                if m:
+                    d = m.group(1)
+                    doc_date = f"{d[6:]}-{d[3:5]}-{d[:2]}"
+
+            words = page.extract_words()
+            rows = words_to_rows(words, y_tolerance=3)
+
+            for y, row_words in rows:
+                titre_text = ' '.join(w['text'] for w in row_words if RT_TITRE_MIN <= w['x0'] < RT_TITRE_MAX).strip()
+                qte_text = words_in_band(row_words, RT_QTE_MIN, RT_QTE_MAX).strip()
+
+                # Detect section headers
+                if titre_text in ('ACTIONS', 'OBLIGATIONS') and not qte_text:
+                    current_section = titre_text
+                    continue
+
+                # Skip total/summary rows
+                if titre_text in ('TOTAL', '') :
+                    continue
+                if re.match(r'^\d[\d\s]+\d+,\d+%', titre_text):
+                    continue
+
+                # Data row: titre band has text AND qte band has a number
+                if not titre_text or not qte_text:
+                    continue
+
+                # Skip rows where qte looks non-numeric
+                qte_clean = qte_text.replace(',', '').replace(' ', '').replace('\xa0', '')
+                try:
+                    quantite = int(qte_clean)
+                except (ValueError, TypeError):
+                    continue
+
+                cout_raw = words_in_band(row_words, RT_COUT_MIN, RT_COUT_MAX).strip()
+                valeur_raw = words_in_band(row_words, RT_VALEUR_MIN, RT_VALEUR_MAX).strip()
+
+                # Parse cout_moyen as float
+                def parse_float_num(s):
+                    if not s:
+                        return None
+                    s = s.replace('\xa0', '').replace(' ', '').replace(',', '').replace('(cid:3031)', '')
+                    try:
+                        return float(s)
+                    except (ValueError, TypeError):
+                        return None
+
+                lines.append({
+                    'titre': titre_text,
+                    'section': current_section or '',
+                    'quantite': quantite,
+                    'cout_moyen': parse_float_num(cout_raw),
+                    'valeur_fcfa': parse_num(valeur_raw),
+                    'source_file': source_file,
+                })
+
+    if lines:
+        results.append({
+            'client': client or '',
+            'compte': compte or '',
+            'date': doc_date or '',
+            'source_file': source_file,
+            'lines': lines,
+        })
+
+    return results
+
+
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -246,7 +627,14 @@ def parse_pdf():
         return jsonify({'error': 'No files provided'}), 400
 
     files = request.files.getlist('files')
-    results = {'soldes': [], 'valorisation': [], 'errors': []}
+    results = {
+        'soldes': [],
+        'valorisation': [],
+        'affectations': [],
+        'situation_client': [],
+        'releve_titres': [],
+        'errors': []
+    }
 
     for f in files:
         if not f.filename.lower().endswith('.pdf'):
@@ -265,6 +653,15 @@ def parse_pdf():
             elif doc_type == 'valorisation':
                 accounts = parse_valorisation_portefeuille(tmp_path, f.filename)
                 results['valorisation'].extend(accounts)
+            elif doc_type == 'affectations':
+                accounts = parse_affectations_preliminaires(tmp_path, f.filename)
+                results['affectations'].extend(accounts)
+            elif doc_type == 'situation_client':
+                accounts = parse_situation_client(tmp_path, f.filename)
+                results['situation_client'].extend(accounts)
+            elif doc_type == 'releve_titres':
+                accounts = parse_releve_titres(tmp_path, f.filename)
+                results['releve_titres'].extend(accounts)
             else:
                 results['errors'].append(f'{f.filename}: type de document non reconnu')
         except Exception as e:
@@ -448,6 +845,97 @@ def export_excel():
                         cell.font = Font(bold=True,
                                          color=('276749' if statut == 'OK' else
                                                 'C53030' if statut == 'ÉCART' else '4A5568'))
+                row += 1
+
+    # ── Affectations Préliminaires ────────────────────────────────────────
+    affectations = [a for a in data.get('affectations', []) if matches_date(a)]
+    if affectations:
+        ws = wb.create_sheet('Affectations Préliminaires')
+        cols = ['Date', 'Date Règlement', 'Adhérent', 'Titre', 'Compte',
+                'Quantité', 'Cours', 'Valeur', 'Négociateur', 'Fichier Source']
+        widths = [14, 14, 30, 40, 12, 12, 12, 18, 30, 50]
+        for c, (h, w) in enumerate(zip(cols, widths), 1):
+            set_header(ws.cell(row=1, column=c, value=h))
+            ws.column_dimensions[get_column_letter(c)].width = w
+        ws.row_dimensions[1].height = 30
+        ws.freeze_panes = 'A2'
+        row = 2
+        for acc in affectations:
+            for i, l in enumerate(acc.get('lines', [])):
+                vals = [
+                    acc.get('date', ''),
+                    acc.get('date_reglement', ''),
+                    acc.get('adherent', ''),
+                    l.get('titre', ''),
+                    l.get('compte', ''),
+                    l.get('quantite'),
+                    l.get('cours'),
+                    l.get('valeur'),
+                    l.get('negociateur', ''),
+                    l.get('source_file', acc.get('source_file', '')),
+                ]
+                for c, v in enumerate(vals, 1):
+                    set_cell(ws.cell(row=row, column=c, value=v), i, 6 <= c <= 8)
+                row += 1
+
+    # ── Situation Client FCP ──────────────────────────────────────────────
+    situation_clients = [a for a in data.get('situation_client', []) if matches_date(a)]
+    if situation_clients:
+        ws = wb.create_sheet('Situation Client FCP')
+        cols = ['Date', 'Client', 'Matricule', 'Titre', 'ISIN',
+                'Quantité', 'Cours Actuel', 'Valorisation XOF', 'Fichier Source']
+        widths = [14, 36, 14, 40, 16, 12, 16, 20, 50]
+        for c, (h, w) in enumerate(zip(cols, widths), 1):
+            set_header(ws.cell(row=1, column=c, value=h))
+            ws.column_dimensions[get_column_letter(c)].width = w
+        ws.row_dimensions[1].height = 30
+        ws.freeze_panes = 'A2'
+        row = 2
+        for acc in situation_clients:
+            for i, l in enumerate(acc.get('lines', [])):
+                vals = [
+                    acc.get('date', ''),
+                    acc.get('client_name', ''),
+                    acc.get('matricule', ''),
+                    l.get('titre', ''),
+                    l.get('isin', ''),
+                    l.get('quantite'),
+                    l.get('cours_actuel'),
+                    l.get('valorisation_xof'),
+                    l.get('source_file', acc.get('source_file', '')),
+                ]
+                for c, v in enumerate(vals, 1):
+                    set_cell(ws.cell(row=row, column=c, value=v), i, c in (6, 7, 8))
+                row += 1
+
+    # ── Relevé Titres FCP ─────────────────────────────────────────────────
+    releve_titres = [a for a in data.get('releve_titres', []) if matches_date(a)]
+    if releve_titres:
+        ws = wb.create_sheet('Relevé Titres FCP')
+        cols = ['Date', 'Client', 'Compte', 'Section', 'Titre',
+                'Quantité', 'Coût Moyen', 'Valeur FCFA', 'Fichier Source']
+        widths = [14, 20, 16, 14, 40, 12, 18, 20, 50]
+        for c, (h, w) in enumerate(zip(cols, widths), 1):
+            set_header(ws.cell(row=1, column=c, value=h))
+            ws.column_dimensions[get_column_letter(c)].width = w
+        ws.row_dimensions[1].height = 30
+        ws.freeze_panes = 'A2'
+        row = 2
+        for acc in releve_titres:
+            for i, l in enumerate(acc.get('lines', [])):
+                vals = [
+                    acc.get('date', ''),
+                    acc.get('client', ''),
+                    acc.get('compte', ''),
+                    l.get('section', ''),
+                    l.get('titre', ''),
+                    l.get('quantite'),
+                    l.get('cout_moyen'),
+                    l.get('valeur_fcfa'),
+                    l.get('source_file', acc.get('source_file', '')),
+                ]
+                for c, v in enumerate(vals, 1):
+                    set_cell(ws.cell(row=row, column=c, value=v), i, c in (6, 7, 8))
                 row += 1
 
     output = BytesIO()
