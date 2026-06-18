@@ -24,171 +24,162 @@
     box-shadow: 0 2px 8px rgba(0,0,0,0.2);
   }
 
-  header .logo {
-    font-size: 28px;
-  }
+  header .logo { font-size: 28px; }
+  header h1 { font-size: 20px; font-weight: 600; line-height: 1.2; }
+  header p { font-size: 12px; opacity: 0.8; margin-top: 2px; }
 
-  header h1 {
-    font-size: 20px;
-    font-weight: 600;
-    line-height: 1.2;
-  }
+  .container { max-width: 1400px; margin: 0 auto; padding: 24px; }
 
-  header p {
-    font-size: 12px;
-    opacity: 0.8;
-    margin-top: 2px;
-  }
-
-  .container {
-    max-width: 1400px;
-    margin: 0 auto;
-    padding: 24px 24px;
-  }
-
-  /* Upload zone */
+  /* Upload card */
   .upload-card {
     background: white;
     border-radius: 12px;
-    padding: 32px;
+    padding: 28px 32px;
     box-shadow: 0 1px 4px rgba(0,0,0,0.08);
     margin-bottom: 24px;
   }
 
   .upload-card h2 {
-    font-size: 16px;
-    font-weight: 600;
-    color: #003366;
-    margin-bottom: 16px;
-    display: flex;
-    align-items: center;
-    gap: 8px;
+    font-size: 16px; font-weight: 600; color: #003366;
+    margin-bottom: 16px; display: flex; align-items: center; gap: 8px;
   }
 
-  .drop-zone {
+  /* Two import methods side by side */
+  .import-methods {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+  }
+
+  @media (max-width: 700px) { .import-methods { grid-template-columns: 1fr; } }
+
+  .method-box {
     border: 2px dashed #a0aec0;
     border-radius: 10px;
-    padding: 40px 20px;
-    text-align: center;
-    cursor: pointer;
-    transition: all 0.2s;
+    padding: 24px 16px;
     background: #f7fafc;
+    position: relative;
   }
 
-  .drop-zone:hover, .drop-zone.dragover {
-    border-color: #1F5FA6;
-    background: #ebf4ff;
+  .method-box .method-label {
+    font-size: 11px; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 0.08em; color: #718096; margin-bottom: 12px;
+    display: flex; align-items: center; gap: 6px;
   }
 
-  .drop-zone .icon { font-size: 40px; margin-bottom: 8px; }
-  .drop-zone p { color: #4a5568; font-size: 14px; }
+  /* Drop zone */
+  .drop-zone {
+    text-align: center; cursor: pointer; transition: all 0.2s;
+  }
+  .drop-zone:hover, .drop-zone.dragover { border-color: #1F5FA6; background: #ebf4ff; }
+  .drop-zone .icon { font-size: 32px; margin-bottom: 6px; }
+  .drop-zone p { color: #4a5568; font-size: 13px; }
   .drop-zone p strong { color: #1F5FA6; }
   .drop-zone input { display: none; }
 
+  /* OneDrive folder */
+  .onedrive-box {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 12px; min-height: 120px;
+  }
+
+  .onedrive-path {
+    font-size: 12px; color: #4a5568; background: #edf2f7;
+    padding: 4px 10px; border-radius: 4px; max-width: 100%;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    display: none;
+  }
+
+  /* File list */
   .file-list {
-    margin-top: 12px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
+    margin-top: 12px; display: flex; flex-wrap: wrap; gap: 6px;
   }
 
   .file-tag {
-    background: #ebf4ff;
-    border: 1px solid #bee3f8;
-    color: #2b6cb0;
-    padding: 4px 12px;
-    border-radius: 20px;
-    font-size: 13px;
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    background: #ebf4ff; border: 1px solid #bee3f8; color: #2b6cb0;
+    padding: 3px 10px; border-radius: 20px; font-size: 12px;
+    display: flex; align-items: center; gap: 5px;
   }
 
   .file-tag button {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: #e53e3e;
-    font-size: 14px;
-    line-height: 1;
-    padding: 0;
+    background: none; border: none; cursor: pointer;
+    color: #e53e3e; font-size: 13px; line-height: 1; padding: 0;
   }
 
-  .btn {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 24px;
+  /* Date selector bar */
+  .date-bar {
+    display: none;
+    background: #f7fafc;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    border: none;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .date-bar.visible { display: flex; }
+
+  .date-bar label { font-size: 13px; font-weight: 600; color: #003366; }
+
+  .date-chips { display: flex; gap: 8px; flex-wrap: wrap; }
+
+  .date-chip {
+    padding: 5px 14px; border-radius: 20px; font-size: 13px; font-weight: 500;
+    cursor: pointer; border: 2px solid #e2e8f0; background: white; color: #4a5568;
     transition: all 0.15s;
   }
 
-  .btn-primary {
-    background: #1F5FA6;
-    color: white;
+  .date-chip:hover { border-color: #1F5FA6; color: #1F5FA6; }
+  .date-chip.active { border-color: #1F5FA6; background: #1F5FA6; color: white; }
+  .date-chip.all { border-color: #a0aec0; }
+  .date-chip.all.active { border-color: #003366; background: #003366; }
+
+  /* Buttons */
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 9px 20px; border-radius: 8px; font-size: 14px;
+    font-weight: 600; cursor: pointer; border: none; transition: all 0.15s;
   }
+
+  .btn-primary { background: #1F5FA6; color: white; }
   .btn-primary:hover { background: #174e8e; }
   .btn-primary:disabled { background: #a0aec0; cursor: not-allowed; }
 
-  .btn-success {
-    background: #276749;
-    color: white;
-  }
+  .btn-success { background: #276749; color: white; }
   .btn-success:hover { background: #1e5237; }
   .btn-success:disabled { background: #a0aec0; cursor: not-allowed; }
 
-  .actions {
-    display: flex;
-    gap: 12px;
-    margin-top: 20px;
-    flex-wrap: wrap;
-    align-items: center;
-  }
+  .btn-folder { background: #f6ad55; color: #744210; }
+  .btn-folder:hover { background: #ed8936; color: white; }
+
+  .actions { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; align-items: center; }
 
   /* Stats */
   .stats-row {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-    gap: 16px;
-    margin-bottom: 24px;
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px; margin-bottom: 24px;
   }
 
   .stat-card {
-    background: white;
-    border-radius: 10px;
-    padding: 20px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
-    border-left: 4px solid #1F5FA6;
+    background: white; border-radius: 10px; padding: 18px 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07); border-left: 4px solid #1F5FA6;
   }
 
-  .stat-card .label { font-size: 12px; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; }
-  .stat-card .value { font-size: 26px; font-weight: 700; color: #003366; margin-top: 4px; }
-  .stat-card .sub { font-size: 12px; color: #718096; margin-top: 2px; }
+  .stat-card .label { font-size: 11px; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-card .value { font-size: 24px; font-weight: 700; color: #003366; margin-top: 4px; }
+  .stat-card .sub { font-size: 11px; color: #718096; margin-top: 2px; }
 
   /* Tabs */
-  .tabs {
-    display: flex;
-    gap: 4px;
-    border-bottom: 2px solid #e2e8f0;
-    margin-bottom: 0;
-  }
+  .tabs { display: flex; gap: 4px; border-bottom: 2px solid #e2e8f0; }
 
   .tab-btn {
-    padding: 10px 20px;
-    border: none;
-    background: none;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 500;
-    color: #718096;
-    border-bottom: 2px solid transparent;
-    margin-bottom: -2px;
-    border-radius: 6px 6px 0 0;
-    transition: all 0.15s;
+    padding: 10px 18px; border: none; background: none; cursor: pointer;
+    font-size: 14px; font-weight: 500; color: #718096;
+    border-bottom: 2px solid transparent; margin-bottom: -2px;
+    border-radius: 6px 6px 0 0; transition: all 0.15s;
   }
 
   .tab-btn:hover { color: #1F5FA6; background: #ebf4ff; }
@@ -197,64 +188,30 @@
   .tab-content { display: none; }
   .tab-content.active { display: block; }
 
-  /* Results card */
+  /* Results */
   .results-card {
-    background: white;
-    border-radius: 12px;
-    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-    overflow: hidden;
-    margin-bottom: 24px;
-  }
-
-  .results-card-header {
-    padding: 16px 20px;
-    border-bottom: 1px solid #e2e8f0;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-  }
-
-  .results-card-header h3 {
-    font-size: 15px;
-    font-weight: 600;
-    color: #003366;
-  }
-
-  .badge {
-    background: #ebf4ff;
-    color: #1F5FA6;
-    border-radius: 20px;
-    padding: 2px 10px;
-    font-size: 12px;
-    font-weight: 600;
+    background: white; border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08); overflow: hidden; margin-bottom: 24px;
   }
 
   /* Account accordion */
-  .account-block {
-    border-bottom: 1px solid #e2e8f0;
-  }
+  .account-block { border-bottom: 1px solid #e2e8f0; }
 
   .account-header {
-    padding: 12px 20px;
-    background: #f7fafc;
-    cursor: pointer;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    user-select: none;
-    transition: background 0.15s;
+    padding: 11px 20px; background: #f7fafc; cursor: pointer;
+    display: flex; justify-content: space-between; align-items: center;
+    user-select: none; transition: background 0.15s;
   }
 
   .account-header:hover { background: #ebf4ff; }
-
-  .account-header .acc-info { display: flex; align-items: center; gap: 12px; }
+  .account-header .acc-info { display: flex; align-items: center; gap: 10px; }
   .account-header .acc-id {
-    background: #003366;
-    color: white;
-    padding: 2px 10px;
-    border-radius: 4px;
-    font-size: 12px;
-    font-weight: 700;
+    background: #003366; color: white; padding: 2px 9px;
+    border-radius: 4px; font-size: 12px; font-weight: 700;
+  }
+  .account-header .acc-date {
+    background: #ebf4ff; color: #1F5FA6; padding: 2px 9px;
+    border-radius: 4px; font-size: 11px; font-weight: 600;
   }
   .account-header .acc-name { font-weight: 600; font-size: 14px; color: #2d3748; }
   .account-header .acc-count { font-size: 12px; color: #718096; }
@@ -265,40 +222,27 @@
   .account-body.open { display: block; }
 
   /* Table */
-  .data-table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 13px;
-  }
+  .data-table { width: 100%; border-collapse: collapse; font-size: 13px; }
 
   .data-table th {
-    background: #003366;
-    color: white;
-    padding: 8px 12px;
-    text-align: left;
-    white-space: nowrap;
-    font-weight: 600;
-    font-size: 12px;
+    background: #003366; color: white; padding: 8px 10px;
+    text-align: left; white-space: nowrap; font-weight: 600; font-size: 11px;
   }
 
   .data-table th.num { text-align: right; }
 
   .data-table td {
-    padding: 7px 12px;
-    border-bottom: 1px solid #edf2f7;
-    white-space: nowrap;
+    padding: 6px 10px; border-bottom: 1px solid #edf2f7; white-space: nowrap;
   }
 
   .data-table tr:nth-child(even) td { background: #f7fafc; }
   .data-table tr:hover td { background: #ebf4ff; }
-
   .data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
-  .data-table td.isin { font-family: monospace; color: #2b6cb0; font-size: 12px; }
+  .data-table td.isin { font-family: monospace; color: #2b6cb0; font-size: 11px; }
+  .data-table td.src { font-size: 11px; color: #718096; max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
 
   .data-table tfoot td {
-    background: #fff8e6;
-    font-weight: 700;
-    border-top: 2px solid #f6ad55;
+    background: #fff8e6; font-weight: 700; border-top: 2px solid #f6ad55;
   }
 
   /* Reconciliation */
@@ -307,60 +251,34 @@
   .rec-ok td:last-child { color: #276749; font-weight: 700; }
   .rec-ecart td:last-child { color: #e53e3e; font-weight: 700; }
 
-  /* Loading / empty */
-  .empty-state {
-    text-align: center;
-    padding: 60px 20px;
-    color: #a0aec0;
-  }
+  /* Empty / loader / error */
+  .empty-state { text-align: center; padding: 60px 20px; color: #a0aec0; }
   .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
   .empty-state p { font-size: 15px; }
 
-  .loader {
-    display: none;
-    text-align: center;
-    padding: 32px;
-    color: #718096;
-  }
+  .loader { display: none; text-align: center; padding: 32px; color: #718096; }
   .loader.visible { display: block; }
   .spinner {
-    width: 36px; height: 36px;
-    border: 4px solid #e2e8f0;
-    border-top-color: #1F5FA6;
-    border-radius: 50%;
-    animation: spin 0.8s linear infinite;
-    margin: 0 auto 12px;
+    width: 36px; height: 36px; border: 4px solid #e2e8f0;
+    border-top-color: #1F5FA6; border-radius: 50%;
+    animation: spin 0.8s linear infinite; margin: 0 auto 12px;
   }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  /* Error */
   .error-box {
-    background: #fff5f5;
-    border: 1px solid #feb2b2;
-    border-radius: 8px;
-    padding: 12px 16px;
-    margin-bottom: 16px;
-    color: #c53030;
-    font-size: 13px;
+    background: #fff5f5; border: 1px solid #feb2b2; border-radius: 8px;
+    padding: 12px 16px; margin-bottom: 16px; color: #c53030; font-size: 13px;
   }
 
-  /* Filter */
+  /* Filter bar */
   .filter-bar {
-    display: flex;
-    gap: 12px;
-    align-items: center;
-    padding: 12px 20px;
-    border-bottom: 1px solid #e2e8f0;
-    flex-wrap: wrap;
+    display: flex; gap: 12px; align-items: center;
+    padding: 10px 20px; border-bottom: 1px solid #e2e8f0; flex-wrap: wrap;
   }
 
   .filter-bar input, .filter-bar select {
-    border: 1px solid #e2e8f0;
-    border-radius: 6px;
-    padding: 6px 12px;
-    font-size: 13px;
-    outline: none;
-    transition: border-color 0.15s;
+    border: 1px solid #e2e8f0; border-radius: 6px; padding: 5px 10px;
+    font-size: 13px; outline: none; transition: border-color 0.15s;
   }
   .filter-bar input:focus, .filter-bar select:focus { border-color: #1F5FA6; }
   .filter-bar label { font-size: 13px; color: #4a5568; }
@@ -387,13 +305,36 @@
   <!-- Upload -->
   <div class="upload-card">
     <h2>📂 Importer des relevés PDF</h2>
-    <div class="drop-zone" id="dropZone">
-      <div class="icon">📄</div>
-      <p>Glisser-déposer vos fichiers PDF ici<br>ou <strong>cliquer pour parcourir</strong></p>
-      <p style="margin-top:8px;font-size:12px;color:#a0aec0;">Fichiers acceptés : Soldes aux Comptes (DCBR) &amp; Valorisation Portefeuille (BTCC/DCBR)</p>
-      <input type="file" id="fileInput" multiple accept=".pdf">
+
+    <div class="import-methods">
+
+      <!-- Method 1: Drag & Drop -->
+      <div class="method-box">
+        <div class="method-label">① Glisser-déposer / Parcourir</div>
+        <div class="drop-zone" id="dropZone">
+          <div class="icon">📄</div>
+          <p>Déposer vos fichiers PDF ici<br>ou <strong>cliquer pour parcourir</strong></p>
+          <input type="file" id="fileInput" multiple accept=".pdf">
+        </div>
+      </div>
+
+      <!-- Method 2: OneDrive folder -->
+      <div class="method-box">
+        <div class="method-label">② Dossier OneDrive (accès direct)</div>
+        <div class="onedrive-box">
+          <button class="btn btn-folder" id="folderBtn" onclick="selectFolder()">
+            📁 Sélectionner le dossier
+          </button>
+          <div class="onedrive-path" id="folderPath"></div>
+          <div id="folderStatus" style="font-size:12px;color:#718096;text-align:center;"></div>
+        </div>
+      </div>
+
     </div>
+
+    <!-- File list -->
     <div class="file-list" id="fileList"></div>
+
     <div class="actions">
       <button class="btn btn-primary" id="parseBtn" disabled>
         ⚙️ Traiter les fichiers
@@ -408,11 +349,17 @@
   <!-- Loader -->
   <div class="loader" id="loader">
     <div class="spinner"></div>
-    <p>Extraction des données en cours…</p>
+    <p id="loaderMsg">Extraction des données en cours…</p>
   </div>
 
   <!-- Error -->
   <div class="error-box" id="errorBox" style="display:none;"></div>
+
+  <!-- Date selector -->
+  <div class="date-bar" id="dateBar">
+    <label>📅 Date de relevé :</label>
+    <div class="date-chips" id="dateChips"></div>
+  </div>
 
   <!-- Stats -->
   <div class="stats-row" id="statsRow" style="display:none;">
@@ -459,9 +406,9 @@
       <div class="tab-content active" id="tab-soldes">
         <div class="filter-bar">
           <label>🔎</label>
-          <input type="text" id="filterSoldes" placeholder="Filtrer par titre, ISIN, compte…" style="width:280px;" oninput="filterTable('soldes')">
+          <input type="text" id="filterSoldes" placeholder="Filtrer par titre, ISIN…" style="width:240px;" oninput="renderAll(parsedData)">
           <label>Compte :</label>
-          <select id="filterSoldesAccount" onchange="filterTable('soldes')">
+          <select id="filterSoldesAccount" onchange="renderAll(parsedData)">
             <option value="">Tous</option>
           </select>
         </div>
@@ -477,9 +424,9 @@
       <div class="tab-content" id="tab-valorisation">
         <div class="filter-bar">
           <label>🔎</label>
-          <input type="text" id="filterValo" placeholder="Filtrer par titre, compte…" style="width:280px;" oninput="filterTable('valo')">
+          <input type="text" id="filterValo" placeholder="Filtrer par titre…" style="width:240px;" oninput="renderAll(parsedData)">
           <label>Compte :</label>
-          <select id="filterValoAccount" onchange="filterTable('valo')">
+          <select id="filterValoAccount" onchange="renderAll(parsedData)">
             <option value="">Tous</option>
           </select>
         </div>
@@ -495,7 +442,7 @@
       <div class="tab-content" id="tab-recon">
         <div class="filter-bar">
           <label>🔎</label>
-          <input type="text" id="filterRecon" placeholder="Filtrer…" style="width:280px;" oninput="filterRecon()">
+          <input type="text" id="filterRecon" placeholder="Filtrer…" style="width:240px;" oninput="filterRecon()">
           <label>Statut :</label>
           <select id="filterReconStatus" onchange="filterRecon()">
             <option value="">Tous</option>
@@ -519,8 +466,9 @@
 <script>
 let parsedData = null;
 let selectedFiles = [];
+let activeDate = null; // null = all dates
 
-// ── Drop zone ──────────────────────────────────────────────────────────
+// ── Drop zone ────────────────────────────────────────────────────────────
 const dropZone = document.getElementById('dropZone');
 const fileInput = document.getElementById('fileInput');
 
@@ -552,14 +500,48 @@ function removeFile(i) {
   renderFileList();
 }
 
-// ── Parse ──────────────────────────────────────────────────────────────
+// ── OneDrive folder picker ───────────────────────────────────────────────
+async function selectFolder() {
+  if (!('showDirectoryPicker' in window)) {
+    showError('Votre navigateur ne supporte pas la sélection de dossier. Utilisez Microsoft Edge ou Google Chrome.');
+    return;
+  }
+  try {
+    const dirHandle = await window.showDirectoryPicker({ mode: 'read' });
+    const pathEl = document.getElementById('folderPath');
+    const statusEl = document.getElementById('folderStatus');
+    pathEl.textContent = dirHandle.name;
+    pathEl.style.display = 'block';
+    statusEl.textContent = 'Lecture du dossier…';
+
+    const pdfFiles = [];
+    for await (const [name, handle] of dirHandle.entries()) {
+      if (handle.kind === 'file' && name.toLowerCase().endsWith('.pdf')) {
+        const file = await handle.getFile();
+        pdfFiles.push(file);
+      }
+    }
+
+    if (pdfFiles.length === 0) {
+      statusEl.textContent = 'Aucun fichier PDF trouvé dans ce dossier.';
+      return;
+    }
+
+    addFiles(pdfFiles);
+    statusEl.textContent = `${pdfFiles.length} fichier(s) PDF chargé(s)`;
+  } catch (e) {
+    if (e.name !== 'AbortError') showError('Erreur dossier : ' + e.message);
+  }
+}
+
+// ── Parse ────────────────────────────────────────────────────────────────
 document.getElementById('parseBtn').addEventListener('click', async () => {
   if (!selectedFiles.length) return;
 
   const form = new FormData();
   selectedFiles.forEach(f => form.append('files', f));
 
-  setLoading(true);
+  setLoading(true, `Traitement de ${selectedFiles.length} fichier(s)…`);
   hideError();
 
   try {
@@ -570,10 +552,12 @@ document.getElementById('parseBtn').addEventListener('click', async () => {
     if (data.errors && data.errors.length) showError(data.errors.join('<br>'));
 
     parsedData = data;
+    activeDate = null;
+    buildDateChips(data);
     renderAll(data);
     document.getElementById('exportBtn').disabled = false;
-    document.getElementById('statusMsg').textContent =
-      `✅ ${data.soldes.length + data.valorisation.length} compte(s) traité(s)`;
+    const total = data.soldes.length + data.valorisation.length;
+    document.getElementById('statusMsg').textContent = `✅ ${total} compte(s) traité(s)`;
   } catch (e) {
     showError('Erreur lors du traitement : ' + e.message);
   } finally {
@@ -581,20 +565,21 @@ document.getElementById('parseBtn').addEventListener('click', async () => {
   }
 });
 
-// ── Export ─────────────────────────────────────────────────────────────
+// ── Export ───────────────────────────────────────────────────────────────
 document.getElementById('exportBtn').addEventListener('click', async () => {
   if (!parsedData) return;
   try {
+    const payload = { ...parsedData, date_filter: activeDate };
     const res = await fetch('/api/export', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(parsedData)
+      body: JSON.stringify(payload)
     });
     const blob = await res.blob();
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'releves_dcbr_btcc.xlsx';
+    a.download = activeDate ? `releves_${activeDate}.xlsx` : 'releves_dcbr_btcc.xlsx';
     a.click();
     URL.revokeObjectURL(url);
   } catch (e) {
@@ -602,71 +587,139 @@ document.getElementById('exportBtn').addEventListener('click', async () => {
   }
 });
 
-// ── Render ─────────────────────────────────────────────────────────────
+// ── Date chips ───────────────────────────────────────────────────────────
+function buildDateChips(data) {
+  const dates = new Set();
+  [...data.soldes, ...data.valorisation].forEach(a => { if (a.date) dates.add(a.date); });
+
+  const bar = document.getElementById('dateBar');
+  const chips = document.getElementById('dateChips');
+
+  if (dates.size === 0) { bar.classList.remove('visible'); return; }
+
+  const sorted = [...dates].sort();
+  chips.innerHTML =
+    `<div class="date-chip all active" onclick="setDate(null, this)">Toutes les dates</div>` +
+    sorted.map(d =>
+      `<div class="date-chip" onclick="setDate('${d}', this)">${fmtDate(d)}</div>`
+    ).join('');
+
+  bar.classList.add('visible');
+}
+
+function setDate(date, el) {
+  activeDate = date;
+  document.querySelectorAll('.date-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  renderAll(parsedData);
+}
+
+function fmtDate(iso) {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return `${d}/${m}/${y}`;
+}
+
+// ── Filtered views ───────────────────────────────────────────────────────
+function filteredSoldes() {
+  if (!parsedData) return [];
+  return parsedData.soldes.filter(a => !activeDate || a.date === activeDate);
+}
+
+function filteredValo() {
+  if (!parsedData) return [];
+  return parsedData.valorisation.filter(a => !activeDate || a.date === activeDate);
+}
+
+// ── Render all ───────────────────────────────────────────────────────────
+function renderAll(data) {
+  if (!data) return;
+  document.getElementById('statsRow').style.display = 'grid';
+  document.getElementById('resultsSection').style.display = 'block';
+
+  const soldes = filteredSoldes();
+  const valos = filteredValo();
+
+  const totalSoldesLines = soldes.reduce((s, a) => s + a.lines.length, 0);
+  const totalValo = valos.reduce((s, a) => s + (a.total_valorisation || 0), 0);
+
+  document.getElementById('statSoldesCount').textContent = soldes.length;
+  document.getElementById('statSoldesLines').textContent = totalSoldesLines;
+  document.getElementById('statValoCount').textContent = valos.length;
+  document.getElementById('statValoTotal').textContent = fmt(totalValo);
+
+  renderSoldes(soldes);
+  renderValo(valos);
+  renderRecon({ soldes, valorisation: valos });
+
+  populateSelect('filterSoldesAccount', soldes.map(a => ({ v: a.adherent, l: `${a.adherent} – ${a.name}` })));
+  populateSelect('filterValoAccount', valos.map(a => ({ v: a.adherent, l: `${a.adherent} – ${a.name}` })));
+}
+
+function populateSelect(id, options) {
+  const sel = document.getElementById(id);
+  const cur = sel.value;
+  sel.innerHTML = '<option value="">Tous</option>' +
+    options.map(o => `<option value="${o.v}">${o.l}</option>`).join('');
+  sel.value = cur;
+}
+
 function fmt(n) {
   if (n == null || n === '') return '—';
   return Number(n).toLocaleString('fr-FR');
 }
 
-function renderAll(data) {
-  document.getElementById('statsRow').style.display = 'grid';
-  document.getElementById('resultsSection').style.display = 'block';
-
-  const totalSoldesLines = data.soldes.reduce((s, a) => s + a.lines.length, 0);
-  const totalValo = data.valorisation.reduce((s, a) => s + (a.total_valorisation || 0), 0);
-
-  document.getElementById('statSoldesCount').textContent = data.soldes.length;
-  document.getElementById('statSoldesLines').textContent = totalSoldesLines;
-  document.getElementById('statValoCount').textContent = data.valorisation.length;
-  document.getElementById('statValoTotal').textContent = fmt(totalValo);
-
-  renderSoldes(data.soldes);
-  renderValo(data.valorisation);
-  renderRecon(data);
-
-  // Populate filters
-  populateSelect('filterSoldesAccount', data.soldes.map(a => ({v: a.adherent, l: `${a.adherent} – ${a.name}`})));
-  populateSelect('filterValoAccount', data.valorisation.map(a => ({v: a.adherent, l: `${a.adherent} – ${a.name}`})));
+function srcBadge(src) {
+  if (!src) return '';
+  const short = src.split(/[\\/]/).pop();
+  return `<span title="${src}" style="font-size:10px;color:#718096;background:#f7fafc;border:1px solid #e2e8f0;border-radius:3px;padding:1px 5px;display:inline-block;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${short}</span>`;
 }
 
-function populateSelect(id, options) {
-  const sel = document.getElementById(id);
-  sel.innerHTML = '<option value="">Tous</option>' +
-    options.map(o => `<option value="${o.v}">${o.l}</option>`).join('');
-}
-
+// ── Soldes ───────────────────────────────────────────────────────────────
 function renderSoldes(accounts) {
   const container = document.getElementById('soldesContent');
-  if (!accounts.length) {
+  const q = document.getElementById('filterSoldes').value.toLowerCase();
+  const accFilter = document.getElementById('filterSoldesAccount').value;
+
+  const filtered = accounts.filter(a => !accFilter || a.adherent === accFilter);
+
+  if (!filtered.length) {
     container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>Aucun relevé Soldes aux Comptes</p></div>';
     return;
   }
-  container.innerHTML = accounts.map(acc => `
-    <div class="account-block" data-adherent="${acc.adherent}">
+
+  container.innerHTML = filtered.map(acc => {
+    const lines = acc.lines.filter(l =>
+      !q || l.titre.toLowerCase().includes(q) || (l.isin || '').toLowerCase().includes(q)
+    );
+    return `
+    <div class="account-block">
       <div class="account-header" onclick="toggleAccount(this)">
         <div class="acc-info">
           <span class="acc-id">${acc.adherent}</span>
+          ${acc.date ? `<span class="acc-date">${fmtDate(acc.date)}</span>` : ''}
           <span class="acc-name">${acc.name}</span>
-          <span class="acc-count">${acc.lines.length} titre(s)</span>
+          <span class="acc-count">${lines.length} titre(s)</span>
         </div>
-        <span class="toggle">▼</span>
+        <div style="display:flex;align-items:center;gap:10px;">
+          ${srcBadge(acc.source_file)}
+          <span class="toggle">▼</span>
+        </div>
       </div>
       <div class="account-body">
         <table class="data-table">
-          <thead>
-            <tr>
-              <th>Titre</th>
-              <th>Code ISIN</th>
-              <th class="num">Solde Disponible</th>
-              <th class="num">Vente en Attente</th>
-              <th class="num">Gelé</th>
-              <th class="num">Nanti</th>
-              <th class="num">Solde Indicatif</th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th>Titre</th><th>Code ISIN</th>
+            <th class="num">Solde Disponible</th>
+            <th class="num">Vente en Attente</th>
+            <th class="num">Gelé</th>
+            <th class="num">Nanti</th>
+            <th class="num">Solde Indicatif</th>
+            <th>Fichier source</th>
+          </tr></thead>
           <tbody>
-            ${acc.lines.map(l => `
-              <tr data-titre="${l.titre.toLowerCase()}" data-isin="${(l.isin||'').toLowerCase()}">
+            ${lines.map(l => `
+              <tr>
                 <td>${l.titre}</td>
                 <td class="isin">${l.isin || ''}</td>
                 <td class="num">${fmt(l.solde_disponible)}</td>
@@ -674,73 +727,85 @@ function renderSoldes(accounts) {
                 <td class="num">${fmt(l.gele)}</td>
                 <td class="num">${fmt(l.nanti)}</td>
                 <td class="num">${fmt(l.solde_indicatif)}</td>
+                <td class="src">${l.source_file || ''}</td>
               </tr>`).join('')}
           </tbody>
-          <tfoot>
-            <tr>
-              <td colspan="2">TOTAL</td>
-              <td class="num">${fmt(acc.lines.reduce((s,l) => s + (l.solde_disponible||0), 0))}</td>
-              <td class="num">${fmt(acc.lines.reduce((s,l) => s + (l.vente_en_attente||0), 0))}</td>
-              <td class="num"></td>
-              <td class="num"></td>
-              <td class="num">${fmt(acc.lines.reduce((s,l) => s + (l.solde_indicatif||0), 0))}</td>
-            </tr>
-          </tfoot>
+          <tfoot><tr>
+            <td colspan="2">TOTAL</td>
+            <td class="num">${fmt(lines.reduce((s, l) => s + (l.solde_disponible || 0), 0))}</td>
+            <td class="num">${fmt(lines.reduce((s, l) => s + (l.vente_en_attente || 0), 0))}</td>
+            <td class="num"></td><td class="num"></td>
+            <td class="num">${fmt(lines.reduce((s, l) => s + (l.solde_indicatif || 0), 0))}</td>
+            <td></td>
+          </tr></tfoot>
         </table>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
+// ── Valorisation ─────────────────────────────────────────────────────────
 function renderValo(accounts) {
   const container = document.getElementById('valoContent');
-  if (!accounts.length) {
+  const q = document.getElementById('filterValo').value.toLowerCase();
+  const accFilter = document.getElementById('filterValoAccount').value;
+
+  const filtered = accounts.filter(a => !accFilter || a.adherent === accFilter);
+
+  if (!filtered.length) {
     container.innerHTML = '<div class="empty-state"><div class="icon">📊</div><p>Aucun relevé Valorisation</p></div>';
     return;
   }
-  container.innerHTML = accounts.map(acc => `
-    <div class="account-block" data-adherent="${acc.adherent}">
+
+  container.innerHTML = filtered.map(acc => {
+    const lines = acc.lines.filter(l => !q || l.titre.toLowerCase().includes(q));
+    return `
+    <div class="account-block">
       <div class="account-header" onclick="toggleAccount(this)">
         <div class="acc-info">
           <span class="acc-id">${acc.adherent}</span>
+          ${acc.date ? `<span class="acc-date">${fmtDate(acc.date)}</span>` : ''}
           <span class="acc-name">${acc.name}</span>
-          <span class="acc-count">${acc.lines.length} titre(s)</span>
+          <span class="acc-count">${lines.length} titre(s)</span>
         </div>
-        <div style="display:flex;align-items:center;gap:16px;">
+        <div style="display:flex;align-items:center;gap:10px;">
           <span style="font-size:13px;font-weight:600;color:#276749;">${fmt(acc.total_valorisation)} FCFA</span>
+          ${srcBadge(acc.source_file)}
           <span class="toggle">▼</span>
         </div>
       </div>
       <div class="account-body">
         <table class="data-table">
-          <thead>
-            <tr>
-              <th>Titre</th>
-              <th class="num">Cours Référence</th>
-              <th class="num">Balance</th>
-              <th class="num">Valorisation</th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th>Titre</th>
+            <th class="num">Cours Référence</th>
+            <th class="num">Balance</th>
+            <th class="num">Valorisation</th>
+            <th>Fichier source</th>
+          </tr></thead>
           <tbody>
-            ${acc.lines.map(l => `
-              <tr data-titre="${l.titre.toLowerCase()}">
+            ${lines.map(l => `
+              <tr>
                 <td>${l.titre}</td>
                 <td class="num">${fmt(l.cours_reference)}</td>
                 <td class="num">${fmt(l.balance)}</td>
                 <td class="num">${fmt(l.valorisation)}</td>
+                <td class="src">${l.source_file || ''}</td>
               </tr>`).join('')}
           </tbody>
-          <tfoot>
-            <tr>
-              <td colspan="2">TOTAL</td>
-              <td class="num">${fmt(acc.lines.reduce((s,l) => s + (l.balance||0), 0))}</td>
-              <td class="num">${fmt(acc.total_valorisation)}</td>
-            </tr>
-          </tfoot>
+          <tfoot><tr>
+            <td colspan="2">TOTAL</td>
+            <td class="num">${fmt(lines.reduce((s, l) => s + (l.balance || 0), 0))}</td>
+            <td class="num">${fmt(acc.total_valorisation)}</td>
+            <td></td>
+          </tr></tfoot>
         </table>
       </div>
-    </div>`).join('');
+    </div>`;
+  }).join('');
 }
 
+// ── Réconciliation ────────────────────────────────────────────────────────
 function renderRecon(data) {
   const container = document.getElementById('reconContent');
   if (!data.soldes.length || !data.valorisation.length) {
@@ -748,41 +813,37 @@ function renderRecon(data) {
     return;
   }
 
-  // Build soldes index by adherent -> isin -> solde_indicatif
+  // Index soldes by (adherent, date) -> isin -> line
   const soldesIdx = {};
   data.soldes.forEach(acc => {
-    if (!soldesIdx[acc.adherent]) soldesIdx[acc.adherent] = {};
-    acc.lines.forEach(l => { soldesIdx[acc.adherent][l.isin] = l; });
+    const key = `${acc.adherent}|${acc.date || ''}`;
+    if (!soldesIdx[key]) soldesIdx[key] = {};
+    acc.lines.forEach(l => { soldesIdx[key][l.isin] = l; });
   });
-
-  // Build valo index by adherent -> titre -> line
-  const valoByAdh = {};
-  data.valorisation.forEach(acc => { valoByAdh[acc.adherent] = acc; });
 
   let rows = '';
   let okCount = 0, ecartCount = 0, naCount = 0;
 
   data.valorisation.forEach(acc => {
-    const soldesAcc = soldesIdx[acc.adherent];
+    const key = `${acc.adherent}|${acc.date || ''}`;
+    const soldesAcc = soldesIdx[key];
     acc.lines.forEach(line => {
-      let balanceDcbr = null;
-      let isin = null;
+      let balanceDcbr = null, isin = null, srcDcbr = '';
       if (soldesAcc) {
-        // Try to match by partial titre
         const titleLower = line.titre.toLowerCase();
         for (const [isink, sl] of Object.entries(soldesAcc)) {
           if (sl.titre.toLowerCase().includes(titleLower.substring(0, 10)) ||
               titleLower.includes(sl.titre.toLowerCase().substring(0, 10))) {
             balanceDcbr = sl.solde_indicatif;
             isin = isink;
+            srcDcbr = sl.source_file || '';
             break;
           }
         }
       }
 
       const balanceBtcc = line.balance;
-      let ecart = null;
-      let statut = 'N/A';
+      let ecart = null, statut = 'N/A';
       if (balanceDcbr !== null && balanceBtcc !== null) {
         ecart = balanceBtcc - balanceDcbr;
         statut = ecart === 0 ? 'OK' : 'ÉCART';
@@ -793,6 +854,7 @@ function renderRecon(data) {
 
       const cls = statut === 'OK' ? 'rec-ok' : statut === 'ÉCART' ? 'rec-ecart' : '';
       rows += `<tr class="${cls}" data-statut="${statut}" data-titre="${line.titre.toLowerCase()}">
+        <td>${fmtDate(acc.date || '')}</td>
         <td>${acc.adherent}</td>
         <td>${acc.name}</td>
         <td>${isin || ''}</td>
@@ -800,36 +862,36 @@ function renderRecon(data) {
         <td class="num">${fmt(balanceDcbr)}</td>
         <td class="num">${fmt(balanceBtcc)}</td>
         <td class="num">${ecart !== null ? fmt(ecart) : '—'}</td>
-        <td style="text-align:center;">${statut}</td>
+        <td style="text-align:center;font-weight:700;">${statut}</td>
+        <td class="src" title="${srcDcbr}">${srcDcbr.split(/[\\/]/).pop()}</td>
+        <td class="src" title="${line.source_file||''}">${(line.source_file||'').split(/[\\/]/).pop()}</td>
       </tr>`;
     });
   });
 
   container.innerHTML = `
-    <div style="padding:12px 20px;background:#f7fafc;border-bottom:1px solid #e2e8f0;display:flex;gap:20px;font-size:13px;">
+    <div style="padding:10px 20px;background:#f7fafc;border-bottom:1px solid #e2e8f0;display:flex;gap:20px;font-size:13px;">
       <span>✅ <strong>${okCount}</strong> OK</span>
       <span>⚠️ <strong>${ecartCount}</strong> Écarts</span>
       <span>❓ <strong>${naCount}</strong> N/A</span>
     </div>
     <div style="overflow-x:auto;">
     <table class="data-table" id="reconTable">
-      <thead>
-        <tr>
-          <th>Adhérent</th>
-          <th>Nom du Compte</th>
-          <th>ISIN</th>
-          <th>Titre</th>
-          <th class="num">Balance DCBR</th>
-          <th class="num">Balance BTCC</th>
-          <th class="num">Écart</th>
-          <th style="text-align:center;">Statut</th>
-        </tr>
-      </thead>
+      <thead><tr>
+        <th>Date</th><th>Adhérent</th><th>Nom du Compte</th>
+        <th>ISIN</th><th>Titre</th>
+        <th class="num">Balance DCBR</th>
+        <th class="num">Balance BTCC</th>
+        <th class="num">Écart</th>
+        <th style="text-align:center;">Statut</th>
+        <th>Source DCBR</th>
+        <th>Source BTCC</th>
+      </tr></thead>
       <tbody>${rows}</tbody>
     </table></div>`;
 }
 
-// ── Tabs ───────────────────────────────────────────────────────────────
+// ── Tabs ──────────────────────────────────────────────────────────────────
 function switchTab(name, btn) {
   document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
@@ -842,42 +904,6 @@ function toggleAccount(header) {
   header.nextElementSibling.classList.toggle('open');
 }
 
-// ── Filters ────────────────────────────────────────────────────────────
-function filterTable(type) {
-  if (type === 'soldes') {
-    const q = document.getElementById('filterSoldes').value.toLowerCase();
-    const acc = document.getElementById('filterSoldesAccount').value;
-    document.querySelectorAll('#soldesContent .account-block').forEach(block => {
-      const matchAcc = !acc || block.dataset.adherent === acc;
-      if (!matchAcc) { block.style.display = 'none'; return; }
-      block.style.display = '';
-      if (q) {
-        block.querySelectorAll('tbody tr').forEach(row => {
-          const text = row.dataset.titre + ' ' + row.dataset.isin;
-          row.style.display = text.includes(q) ? '' : 'none';
-        });
-      } else {
-        block.querySelectorAll('tbody tr').forEach(row => row.style.display = '');
-      }
-    });
-  } else {
-    const q = document.getElementById('filterValo').value.toLowerCase();
-    const acc = document.getElementById('filterValoAccount').value;
-    document.querySelectorAll('#valoContent .account-block').forEach(block => {
-      const matchAcc = !acc || block.dataset.adherent === acc;
-      if (!matchAcc) { block.style.display = 'none'; return; }
-      block.style.display = '';
-      if (q) {
-        block.querySelectorAll('tbody tr').forEach(row => {
-          row.style.display = row.dataset.titre.includes(q) ? '' : 'none';
-        });
-      } else {
-        block.querySelectorAll('tbody tr').forEach(row => row.style.display = '');
-      }
-    });
-  }
-}
-
 function filterRecon() {
   const q = document.getElementById('filterRecon').value.toLowerCase();
   const s = document.getElementById('filterReconStatus').value;
@@ -888,9 +914,10 @@ function filterRecon() {
   });
 }
 
-// ── Helpers ────────────────────────────────────────────────────────────
-function setLoading(v) {
+// ── Helpers ───────────────────────────────────────────────────────────────
+function setLoading(v, msg) {
   document.getElementById('loader').classList.toggle('visible', v);
+  if (msg) document.getElementById('loaderMsg').textContent = msg;
   document.getElementById('parseBtn').disabled = v || !selectedFiles.length;
 }
 
