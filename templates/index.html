@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Traitement Relevés BTCC / DCBR</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Segoe UI', sans-serif;
+    background: #f0f4f8;
+    color: #1a202c;
+    min-height: 100vh;
+  }
+
+  header {
+    background: linear-gradient(135deg, #003366 0%, #1F5FA6 100%);
+    color: white;
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+  }
+
+  header .logo {
+    font-size: 28px;
+  }
+
+  header h1 {
+    font-size: 20px;
+    font-weight: 600;
+    line-height: 1.2;
+  }
+
+  header p {
+    font-size: 12px;
+    opacity: 0.8;
+    margin-top: 2px;
+  }
+
+  .container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 24px 24px;
+  }
+
+  /* Upload zone */
+  .upload-card {
+    background: white;
+    border-radius: 12px;
+    padding: 32px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    margin-bottom: 24px;
+  }
+
+  .upload-card h2 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #003366;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .drop-zone {
+    border: 2px dashed #a0aec0;
+    border-radius: 10px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.2s;
+    background: #f7fafc;
+  }
+
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: #1F5FA6;
+    background: #ebf4ff;
+  }
+
+  .drop-zone .icon { font-size: 40px; margin-bottom: 8px; }
+  .drop-zone p { color: #4a5568; font-size: 14px; }
+  .drop-zone p strong { color: #1F5FA6; }
+  .drop-zone input { display: none; }
+
+  .file-list {
+    margin-top: 12px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .file-tag {
+    background: #ebf4ff;
+    border: 1px solid #bee3f8;
+    color: #2b6cb0;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .file-tag button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    color: #e53e3e;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0;
+  }
+
+  .btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    border: none;
+    transition: all 0.15s;
+  }
+
+  .btn-primary {
+    background: #1F5FA6;
+    color: white;
+  }
+  .btn-primary:hover { background: #174e8e; }
+  .btn-primary:disabled { background: #a0aec0; cursor: not-allowed; }
+
+  .btn-success {
+    background: #276749;
+    color: white;
+  }
+  .btn-success:hover { background: #1e5237; }
+  .btn-success:disabled { background: #a0aec0; cursor: not-allowed; }
+
+  .actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 20px;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+
+  /* Stats */
+  .stats-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .stat-card {
+    background: white;
+    border-radius: 10px;
+    padding: 20px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.07);
+    border-left: 4px solid #1F5FA6;
+  }
+
+  .stat-card .label { font-size: 12px; color: #718096; text-transform: uppercase; letter-spacing: 0.05em; }
+  .stat-card .value { font-size: 26px; font-weight: 700; color: #003366; margin-top: 4px; }
+  .stat-card .sub { font-size: 12px; color: #718096; margin-top: 2px; }
+
+  /* Tabs */
+  .tabs {
+    display: flex;
+    gap: 4px;
+    border-bottom: 2px solid #e2e8f0;
+    margin-bottom: 0;
+  }
+
+  .tab-btn {
+    padding: 10px 20px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    color: #718096;
+    border-bottom: 2px solid transparent;
+    margin-bottom: -2px;
+    border-radius: 6px 6px 0 0;
+    transition: all 0.15s;
+  }
+
+  .tab-btn:hover { color: #1F5FA6; background: #ebf4ff; }
+  .tab-btn.active { color: #1F5FA6; border-bottom-color: #1F5FA6; font-weight: 600; }
+
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Results card */
+  .results-card {
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+    overflow: hidden;
+    margin-bottom: 24px;
+  }
+
+  .results-card-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .results-card-header h3 {
+    font-size: 15px;
+    font-weight: 600;
+    color: #003366;
+  }
+
+  .badge {
+    background: #ebf4ff;
+    color: #1F5FA6;
+    border-radius: 20px;
+    padding: 2px 10px;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* Account accordion */
+  .account-block {
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .account-header {
+    padding: 12px 20px;
+    background: #f7fafc;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    user-select: none;
+    transition: background 0.15s;
+  }
+
+  .account-header:hover { background: #ebf4ff; }
+
+  .account-header .acc-info { display: flex; align-items: center; gap: 12px; }
+  .account-header .acc-id {
+    background: #003366;
+    color: white;
+    padding: 2px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .account-header .acc-name { font-weight: 600; font-size: 14px; color: #2d3748; }
+  .account-header .acc-count { font-size: 12px; color: #718096; }
+  .account-header .toggle { color: #718096; transition: transform 0.2s; font-size: 16px; }
+  .account-header.open .toggle { transform: rotate(180deg); }
+
+  .account-body { display: none; overflow-x: auto; }
+  .account-body.open { display: block; }
+
+  /* Table */
+  .data-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .data-table th {
+    background: #003366;
+    color: white;
+    padding: 8px 12px;
+    text-align: left;
+    white-space: nowrap;
+    font-weight: 600;
+    font-size: 12px;
+  }
+
+  .data-table th.num { text-align: right; }
+
+  .data-table td {
+    padding: 7px 12px;
+    border-bottom: 1px solid #edf2f7;
+    white-space: nowrap;
+  }
+
+  .data-table tr:nth-child(even) td { background: #f7fafc; }
+  .data-table tr:hover td { background: #ebf4ff; }
+
+  .data-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+  .data-table td.isin { font-family: monospace; color: #2b6cb0; font-size: 12px; }
+
+  .data-table tfoot td {
+    background: #fff8e6;
+    font-weight: 700;
+    border-top: 2px solid #f6ad55;
+  }
+
+  /* Reconciliation */
+  .rec-ok td { background: #f0fff4 !important; }
+  .rec-ecart td { background: #fff5f5 !important; }
+  .rec-ok td:last-child { color: #276749; font-weight: 700; }
+  .rec-ecart td:last-child { color: #e53e3e; font-weight: 700; }
+
+  /* Loading / empty */
+  .empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #a0aec0;
+  }
+  .empty-state .icon { font-size: 48px; margin-bottom: 12px; }
+  .empty-state p { font-size: 15px; }
+
+  .loader {
+    display: none;
+    text-align: center;
+    padding: 32px;
+    color: #718096;
+  }
+  .loader.visible { display: block; }
+  .spinner {
+    width: 36px; height: 36px;
+    border: 4px solid #e2e8f0;
+    border-top-color: #1F5FA6;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+    margin: 0 auto 12px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Error */
+  .error-box {
+    background: #fff5f5;
+    border: 1px solid #feb2b2;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 16px;
+    color: #c53030;
+    font-size: 13px;
+  }
+
+  /* Filter */
+  .filter-bar {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 12px 20px;
+    border-bottom: 1px solid #e2e8f0;
+    flex-wrap: wrap;
+  }
+
+  .filter-bar input, .filter-bar select {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .filter-bar input:focus, .filter-bar select:focus { border-color: #1F5FA6; }
+  .filter-bar label { font-size: 13px; color: #4a5568; }
+
+  @media (max-width: 600px) {
+    .container { padding: 16px; }
+    header { padding: 14px 16px; }
+    header h1 { font-size: 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🏦</div>
+  <div>
+    <h1>Traitement Relevés BTCC / DCBR</h1>
+    <p>Soldes aux Comptes &amp; Valorisation Portefeuille — UEMOA</p>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Upload -->
+  <div class="upload-card">
+    <h2>📂 Importer des relevés PDF</h2>
+    <div class="drop-zone" id="dropZone">
+      <div class="icon">📄</div>
+      <p>Glisser-déposer vos fichiers PDF ici<br>ou <strong>cliquer pour parcourir</strong></p>
+      <p style="margin-top:8px;font-size:12px;color:#a0aec0;">Fichiers acceptés : Soldes aux Comptes (DCBR) &amp; Valorisation Portefeuille (BTCC/DCBR)</p>
+      <input type="file" id="fileInput" multiple accept=".pdf">
+    </div>
+    <div class="file-list" id="fileList"></div>
+    <div class="actions">
+      <button class="btn btn-primary" id="parseBtn" disabled>
+        ⚙️ Traiter les fichiers
+      </button>
+      <button class="btn btn-success" id="exportBtn" disabled>
+        📥 Exporter Excel
+      </button>
+      <span id="statusMsg" style="font-size:13px;color:#718096;"></span>
+    </div>
+  </div>
+
+  <!-- Loader -->
+  <div class="loader" id="loader">
+    <div class="spinner"></div>
+    <p>Extraction des données en cours…</p>
+  </div>
+
+  <!-- Error -->
+  <div class="error-box" id="errorBox" style="display:none;"></div>
+
+  <!-- Stats -->
+  <div class="stats-row" id="statsRow" style="display:none;">
+    <div class="stat-card">
+      <div class="label">Comptes Soldes</div>
+      <div class="value" id="statSoldesCount">0</div>
+      <div class="sub">comptes traités</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Lignes Soldes</div>
+      <div class="value" id="statSoldesLines">0</div>
+      <div class="sub">titres extraits</div>
+    </div>
+    <div class="stat-card" style="border-color:#276749;">
+      <div class="label">Comptes Valorisation</div>
+      <div class="value" id="statValoCount">0</div>
+      <div class="sub">comptes traités</div>
+    </div>
+    <div class="stat-card" style="border-color:#276749;">
+      <div class="label">Valorisation Totale</div>
+      <div class="value" id="statValoTotal">0</div>
+      <div class="sub">FCFA</div>
+    </div>
+  </div>
+
+  <!-- Results -->
+  <div id="resultsSection" style="display:none;">
+    <div class="results-card">
+      <div style="padding: 4px 20px 0;">
+        <div class="tabs">
+          <button class="tab-btn active" onclick="switchTab('soldes', this)">
+            📋 Soldes aux Comptes
+          </button>
+          <button class="tab-btn" onclick="switchTab('valorisation', this)">
+            📊 Valorisation Portefeuille
+          </button>
+          <button class="tab-btn" onclick="switchTab('recon', this)">
+            🔍 Réconciliation
+          </button>
+        </div>
+      </div>
+
+      <!-- Soldes Tab -->
+      <div class="tab-content active" id="tab-soldes">
+        <div class="filter-bar">
+          <label>🔎</label>
+          <input type="text" id="filterSoldes" placeholder="Filtrer par titre, ISIN, compte…" style="width:280px;" oninput="filterTable('soldes')">
+          <label>Compte :</label>
+          <select id="filterSoldesAccount" onchange="filterTable('soldes')">
+            <option value="">Tous</option>
+          </select>
+        </div>
+        <div id="soldesContent">
+          <div class="empty-state">
+            <div class="icon">📋</div>
+            <p>Aucun relevé Soldes aux Comptes importé</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Valorisation Tab -->
+      <div class="tab-content" id="tab-valorisation">
+        <div class="filter-bar">
+          <label>🔎</label>
+          <input type="text" id="filterValo" placeholder="Filtrer par titre, compte…" style="width:280px;" oninput="filterTable('valo')">
+          <label>Compte :</label>
+          <select id="filterValoAccount" onchange="filterTable('valo')">
+            <option value="">Tous</option>
+          </select>
+        </div>
+        <div id="valoContent">
+          <div class="empty-state">
+            <div class="icon">📊</div>
+            <p>Aucun relevé Valorisation importé</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Reconciliation Tab -->
+      <div class="tab-content" id="tab-recon">
+        <div class="filter-bar">
+          <label>🔎</label>
+          <input type="text" id="filterRecon" placeholder="Filtrer…" style="width:280px;" oninput="filterRecon()">
+          <label>Statut :</label>
+          <select id="filterReconStatus" onchange="filterRecon()">
+            <option value="">Tous</option>
+            <option value="OK">OK</option>
+            <option value="ÉCART">ÉCART</option>
+            <option value="N/A">N/A</option>
+          </select>
+        </div>
+        <div id="reconContent">
+          <div class="empty-state">
+            <div class="icon">🔍</div>
+            <p>Importez des fichiers Soldes et Valorisation pour voir la réconciliation</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+let parsedData = null;
+let selectedFiles = [];
+
+// ── Drop zone ──────────────────────────────────────────────────────────
+const dropZone = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('click', () => fileInput.click());
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  addFiles([...e.dataTransfer.files].filter(f => f.name.toLowerCase().endsWith('.pdf')));
+});
+fileInput.addEventListener('change', () => { addFiles([...fileInput.files]); fileInput.value = ''; });
+
+function addFiles(files) {
+  files.forEach(f => { if (!selectedFiles.find(x => x.name === f.name)) selectedFiles.push(f); });
+  renderFileList();
+}
+
+function renderFileList() {
+  const list = document.getElementById('fileList');
+  list.innerHTML = selectedFiles.map((f, i) =>
+    `<div class="file-tag">📄 ${f.name} <button onclick="removeFile(${i})">×</button></div>`
+  ).join('');
+  document.getElementById('parseBtn').disabled = selectedFiles.length === 0;
+}
+
+function removeFile(i) {
+  selectedFiles.splice(i, 1);
+  renderFileList();
+}
+
+// ── Parse ──────────────────────────────────────────────────────────────
+document.getElementById('parseBtn').addEventListener('click', async () => {
+  if (!selectedFiles.length) return;
+
+  const form = new FormData();
+  selectedFiles.forEach(f => form.append('files', f));
+
+  setLoading(true);
+  hideError();
+
+  try {
+    const res = await fetch('/api/parse', { method: 'POST', body: form });
+    const data = await res.json();
+
+    if (!res.ok) { showError(data.error || 'Erreur serveur'); return; }
+    if (data.errors && data.errors.length) showError(data.errors.join('<br>'));
+
+    parsedData = data;
+    renderAll(data);
+    document.getElementById('exportBtn').disabled = false;
+    document.getElementById('statusMsg').textContent =
+      `✅ ${data.soldes.length + data.valorisation.length} compte(s) traité(s)`;
+  } catch (e) {
+    showError('Erreur lors du traitement : ' + e.message);
+  } finally {
+    setLoading(false);
+  }
+});
+
+// ── Export ─────────────────────────────────────────────────────────────
+document.getElementById('exportBtn').addEventListener('click', async () => {
+  if (!parsedData) return;
+  try {
+    const res = await fetch('/api/export', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(parsedData)
+    });
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'releves_dcbr_btcc.xlsx';
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    showError('Erreur export : ' + e.message);
+  }
+});
+
+// ── Render ─────────────────────────────────────────────────────────────
+function fmt(n) {
+  if (n == null || n === '') return '—';
+  return Number(n).toLocaleString('fr-FR');
+}
+
+function renderAll(data) {
+  document.getElementById('statsRow').style.display = 'grid';
+  document.getElementById('resultsSection').style.display = 'block';
+
+  const totalSoldesLines = data.soldes.reduce((s, a) => s + a.lines.length, 0);
+  const totalValo = data.valorisation.reduce((s, a) => s + (a.total_valorisation || 0), 0);
+
+  document.getElementById('statSoldesCount').textContent = data.soldes.length;
+  document.getElementById('statSoldesLines').textContent = totalSoldesLines;
+  document.getElementById('statValoCount').textContent = data.valorisation.length;
+  document.getElementById('statValoTotal').textContent = fmt(totalValo);
+
+  renderSoldes(data.soldes);
+  renderValo(data.valorisation);
+  renderRecon(data);
+
+  // Populate filters
+  populateSelect('filterSoldesAccount', data.soldes.map(a => ({v: a.adherent, l: `${a.adherent} – ${a.name}`})));
+  populateSelect('filterValoAccount', data.valorisation.map(a => ({v: a.adherent, l: `${a.adherent} – ${a.name}`})));
+}
+
+function populateSelect(id, options) {
+  const sel = document.getElementById(id);
+  sel.innerHTML = '<option value="">Tous</option>' +
+    options.map(o => `<option value="${o.v}">${o.l}</option>`).join('');
+}
+
+function renderSoldes(accounts) {
+  const container = document.getElementById('soldesContent');
+  if (!accounts.length) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">📋</div><p>Aucun relevé Soldes aux Comptes</p></div>';
+    return;
+  }
+  container.innerHTML = accounts.map(acc => `
+    <div class="account-block" data-adherent="${acc.adherent}">
+      <div class="account-header" onclick="toggleAccount(this)">
+        <div class="acc-info">
+          <span class="acc-id">${acc.adherent}</span>
+          <span class="acc-name">${acc.name}</span>
+          <span class="acc-count">${acc.lines.length} titre(s)</span>
+        </div>
+        <span class="toggle">▼</span>
+      </div>
+      <div class="account-body">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Titre</th>
+              <th>Code ISIN</th>
+              <th class="num">Solde Disponible</th>
+              <th class="num">Vente en Attente</th>
+              <th class="num">Gelé</th>
+              <th class="num">Nanti</th>
+              <th class="num">Solde Indicatif</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${acc.lines.map(l => `
+              <tr data-titre="${l.titre.toLowerCase()}" data-isin="${(l.isin||'').toLowerCase()}">
+                <td>${l.titre}</td>
+                <td class="isin">${l.isin || ''}</td>
+                <td class="num">${fmt(l.solde_disponible)}</td>
+                <td class="num">${fmt(l.vente_en_attente)}</td>
+                <td class="num">${fmt(l.gele)}</td>
+                <td class="num">${fmt(l.nanti)}</td>
+                <td class="num">${fmt(l.solde_indicatif)}</td>
+              </tr>`).join('')}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2">TOTAL</td>
+              <td class="num">${fmt(acc.lines.reduce((s,l) => s + (l.solde_disponible||0), 0))}</td>
+              <td class="num">${fmt(acc.lines.reduce((s,l) => s + (l.vente_en_attente||0), 0))}</td>
+              <td class="num"></td>
+              <td class="num"></td>
+              <td class="num">${fmt(acc.lines.reduce((s,l) => s + (l.solde_indicatif||0), 0))}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>`).join('');
+}
+
+function renderValo(accounts) {
+  const container = document.getElementById('valoContent');
+  if (!accounts.length) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">📊</div><p>Aucun relevé Valorisation</p></div>';
+    return;
+  }
+  container.innerHTML = accounts.map(acc => `
+    <div class="account-block" data-adherent="${acc.adherent}">
+      <div class="account-header" onclick="toggleAccount(this)">
+        <div class="acc-info">
+          <span class="acc-id">${acc.adherent}</span>
+          <span class="acc-name">${acc.name}</span>
+          <span class="acc-count">${acc.lines.length} titre(s)</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:16px;">
+          <span style="font-size:13px;font-weight:600;color:#276749;">${fmt(acc.total_valorisation)} FCFA</span>
+          <span class="toggle">▼</span>
+        </div>
+      </div>
+      <div class="account-body">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Titre</th>
+              <th class="num">Cours Référence</th>
+              <th class="num">Balance</th>
+              <th class="num">Valorisation</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${acc.lines.map(l => `
+              <tr data-titre="${l.titre.toLowerCase()}">
+                <td>${l.titre}</td>
+                <td class="num">${fmt(l.cours_reference)}</td>
+                <td class="num">${fmt(l.balance)}</td>
+                <td class="num">${fmt(l.valorisation)}</td>
+              </tr>`).join('')}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="2">TOTAL</td>
+              <td class="num">${fmt(acc.lines.reduce((s,l) => s + (l.balance||0), 0))}</td>
+              <td class="num">${fmt(acc.total_valorisation)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>`).join('');
+}
+
+function renderRecon(data) {
+  const container = document.getElementById('reconContent');
+  if (!data.soldes.length || !data.valorisation.length) {
+    container.innerHTML = '<div class="empty-state"><div class="icon">🔍</div><p>Importez des fichiers Soldes <strong>et</strong> Valorisation pour voir la réconciliation</p></div>';
+    return;
+  }
+
+  // Build soldes index by adherent -> isin -> solde_indicatif
+  const soldesIdx = {};
+  data.soldes.forEach(acc => {
+    if (!soldesIdx[acc.adherent]) soldesIdx[acc.adherent] = {};
+    acc.lines.forEach(l => { soldesIdx[acc.adherent][l.isin] = l; });
+  });
+
+  // Build valo index by adherent -> titre -> line
+  const valoByAdh = {};
+  data.valorisation.forEach(acc => { valoByAdh[acc.adherent] = acc; });
+
+  let rows = '';
+  let okCount = 0, ecartCount = 0, naCount = 0;
+
+  data.valorisation.forEach(acc => {
+    const soldesAcc = soldesIdx[acc.adherent];
+    acc.lines.forEach(line => {
+      let balanceDcbr = null;
+      let isin = null;
+      if (soldesAcc) {
+        // Try to match by partial titre
+        const titleLower = line.titre.toLowerCase();
+        for (const [isink, sl] of Object.entries(soldesAcc)) {
+          if (sl.titre.toLowerCase().includes(titleLower.substring(0, 10)) ||
+              titleLower.includes(sl.titre.toLowerCase().substring(0, 10))) {
+            balanceDcbr = sl.solde_indicatif;
+            isin = isink;
+            break;
+          }
+        }
+      }
+
+      const balanceBtcc = line.balance;
+      let ecart = null;
+      let statut = 'N/A';
+      if (balanceDcbr !== null && balanceBtcc !== null) {
+        ecart = balanceBtcc - balanceDcbr;
+        statut = ecart === 0 ? 'OK' : 'ÉCART';
+      }
+      if (statut === 'OK') okCount++;
+      else if (statut === 'ÉCART') ecartCount++;
+      else naCount++;
+
+      const cls = statut === 'OK' ? 'rec-ok' : statut === 'ÉCART' ? 'rec-ecart' : '';
+      rows += `<tr class="${cls}" data-statut="${statut}" data-titre="${line.titre.toLowerCase()}">
+        <td>${acc.adherent}</td>
+        <td>${acc.name}</td>
+        <td>${isin || ''}</td>
+        <td>${line.titre}</td>
+        <td class="num">${fmt(balanceDcbr)}</td>
+        <td class="num">${fmt(balanceBtcc)}</td>
+        <td class="num">${ecart !== null ? fmt(ecart) : '—'}</td>
+        <td style="text-align:center;">${statut}</td>
+      </tr>`;
+    });
+  });
+
+  container.innerHTML = `
+    <div style="padding:12px 20px;background:#f7fafc;border-bottom:1px solid #e2e8f0;display:flex;gap:20px;font-size:13px;">
+      <span>✅ <strong>${okCount}</strong> OK</span>
+      <span>⚠️ <strong>${ecartCount}</strong> Écarts</span>
+      <span>❓ <strong>${naCount}</strong> N/A</span>
+    </div>
+    <div style="overflow-x:auto;">
+    <table class="data-table" id="reconTable">
+      <thead>
+        <tr>
+          <th>Adhérent</th>
+          <th>Nom du Compte</th>
+          <th>ISIN</th>
+          <th>Titre</th>
+          <th class="num">Balance DCBR</th>
+          <th class="num">Balance BTCC</th>
+          <th class="num">Écart</th>
+          <th style="text-align:center;">Statut</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table></div>`;
+}
+
+// ── Tabs ───────────────────────────────────────────────────────────────
+function switchTab(name, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab-' + name).classList.add('active');
+}
+
+function toggleAccount(header) {
+  header.classList.toggle('open');
+  header.nextElementSibling.classList.toggle('open');
+}
+
+// ── Filters ────────────────────────────────────────────────────────────
+function filterTable(type) {
+  if (type === 'soldes') {
+    const q = document.getElementById('filterSoldes').value.toLowerCase();
+    const acc = document.getElementById('filterSoldesAccount').value;
+    document.querySelectorAll('#soldesContent .account-block').forEach(block => {
+      const matchAcc = !acc || block.dataset.adherent === acc;
+      if (!matchAcc) { block.style.display = 'none'; return; }
+      block.style.display = '';
+      if (q) {
+        block.querySelectorAll('tbody tr').forEach(row => {
+          const text = row.dataset.titre + ' ' + row.dataset.isin;
+          row.style.display = text.includes(q) ? '' : 'none';
+        });
+      } else {
+        block.querySelectorAll('tbody tr').forEach(row => row.style.display = '');
+      }
+    });
+  } else {
+    const q = document.getElementById('filterValo').value.toLowerCase();
+    const acc = document.getElementById('filterValoAccount').value;
+    document.querySelectorAll('#valoContent .account-block').forEach(block => {
+      const matchAcc = !acc || block.dataset.adherent === acc;
+      if (!matchAcc) { block.style.display = 'none'; return; }
+      block.style.display = '';
+      if (q) {
+        block.querySelectorAll('tbody tr').forEach(row => {
+          row.style.display = row.dataset.titre.includes(q) ? '' : 'none';
+        });
+      } else {
+        block.querySelectorAll('tbody tr').forEach(row => row.style.display = '');
+      }
+    });
+  }
+}
+
+function filterRecon() {
+  const q = document.getElementById('filterRecon').value.toLowerCase();
+  const s = document.getElementById('filterReconStatus').value;
+  document.querySelectorAll('#reconTable tbody tr').forEach(row => {
+    const matchQ = !q || row.dataset.titre.includes(q);
+    const matchS = !s || row.dataset.statut === s;
+    row.style.display = matchQ && matchS ? '' : 'none';
+  });
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────
+function setLoading(v) {
+  document.getElementById('loader').classList.toggle('visible', v);
+  document.getElementById('parseBtn').disabled = v || !selectedFiles.length;
+}
+
+function showError(msg) {
+  const box = document.getElementById('errorBox');
+  box.innerHTML = '⚠️ ' + msg;
+  box.style.display = 'block';
+}
+
+function hideError() {
+  document.getElementById('errorBox').style.display = 'none';
+}
+</script>
+</body>
+</html>
