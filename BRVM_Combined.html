@@ -1069,6 +1069,7 @@ async function handleFile(file){
     prog.textContent='&#10060; Erreur : '+e.message;
     notify('Erreur import','err');
   }
+}
 
 // ── SAISIE TX ─────────────────────────────────────────────
 function addTx(){
@@ -1157,7 +1158,6 @@ function renderPager(id,s,pages,tot,fn){
     '<button class="pgb"'+(s.page>=pages?' disabled':'')+' onclick="chgP(\''+fn+'\',1)">&#9658;</button>';
 }
 function chgP(fn,d){if(fn==='renderTx')stTx.page+=d;window[fn]();}
-function switchTab(t){
 function switchTab(t){
   ['Inv','Tx','Amort','Ctrl','Imp','Boc'].forEach(x=>{
     document.getElementById('tab'+x)?.classList.toggle('on',x.toLowerCase()===t);
