@@ -1415,7 +1415,7 @@ function bocRenderAct(){
     '<div class="sc"><div class="lb">Stables</div><div class="vl">'+Math.max(0,tot-up-dn)+'</div></div>'+
     '<div class="sc"><div class="lb">Date BOC</div><div class="vl sky" style="font-size:11px">'+S.date+'</div></div>';
   function th(k,lbl,cls=''){const on=S.sa.k===k?'on':'';const ar=S.sa.k===k?(S.sa.d===1?'↑':'↓'):'↕';
-    return '<th class="'+cls+'" onclick="S.sa={k:''+k+'',d:S.sa.k===''+k+''?-S.sa.d:1};bocRenderAct()">'+lbl+' <span class="sa '+on+'">'+ar+'</span></th>';}
+    return `<th class="${cls}" onclick="S.sa={k:'${k}',d:S.sa.k==='${k}'?-S.sa.d:1};bocRenderAct()">${lbl} <span class="sa ${on}">${ar}</span></th>`;}
   let h='<table><thead><tr>'+th('code','Code')+th('nom','Société')+
     th('cours_prec','Veille','r')+th('ouverture','Ouvert.','r')+
     th('cloture','Clôture','r')+th('variation','Var.%','r')+'<th>Secteur</th></tr></thead><tbody>';
@@ -1451,7 +1451,7 @@ function bocRenderObl(){
     '<div class="sc"><div class="lb">Obligations</div><div class="vl a">'+tot+'</div></div>'+
     '<div class="sc"><div class="lb">Date BOC</div><div class="vl sky" style="font-size:11px">'+S.date+'</div></div>';
   function th(k,lbl,cls=''){const on=S.so.k===k?'on':'';const ar=S.so.k===k?(S.so.d===1?'↑':'↓'):'↕';
-    return '<th class="'+cls+'" onclick="S.so={k:''+k+'',d:S.so.k===''+k+''?-S.so.d:1};bocRenderObl()">'+lbl+' <span class="sa '+on+'">'+ar+'</span></th>';}
+    return `<th class="${cls}" onclick="S.so={k:'${k}',d:S.so.k==='${k}'?-S.so.d:1};bocRenderObl()">${lbl} <span class="sa ${on}">${ar}</span></th>`;}
   let h='<table><thead><tr>'+th('code','Code')+th('nom','Nom')+
     th('cours','Cours','r')+th('coupon_couru','Coupon couru','r')+
     th('coupon_montant','Val. coupon','r')+'<th>Type</th></tr></thead><tbody>';
